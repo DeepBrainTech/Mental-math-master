@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mental Math Master</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Custom Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        
+        @keyframes bounceIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            60% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); }
+        }
+        .animate-bounce-in { animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+    </style>
+</head>
+<body class="bg-slate-50 font-sans text-slate-800 min-h-screen flex flex-col">
+
+    <!-- App Container -->
+    <div id="app" class="flex-grow flex flex-col"></div>
+
+    <script>
+        // --- DATA & CONTENT ---
+        const CURRICULUM = [
+            {
+                id: 'beginner',
+                title: 'Beginner: Addition & Subtraction',
+                color: 'bg-emerald-500',
+                textClass: 'text-emerald-600',
+                borderClass: 'border-emerald-600',
+                hoverClass: 'group-hover:text-emerald-700',
+                description: 'Master the art of "Making Whole Numbers" to speed up basic arithmetic.',
+                lessons: [
+                    {
+                        id: 'b1',
+                        title: 'Making 10s (Addition)',
+                        concept: 'When adding multiple numbers, look for pairs that sum to 10, 20, 100, etc. Group them first.',
+                        example: { problem: '14 + 5 + 6 + 25', steps: ['(14 + 6) + (5 + 25)', '20 + 30', '50'] },
+                        generator: () => {
+                            const pairs = [[1,9], [2,8], [3,7], [4,6], [5,5]];
+                            const pair1 = pairs[Math.floor(Math.random() * pairs.length)];
+                            const pair2 = pairs[Math.floor(Math.random() * pairs.length)];
+                            const a1 = Math.floor(Math.random() * 8) * 10 + pair1[0];
+                            const a2 = Math.floor(Math.random() * 8) * 10 + pair2[0];
+                            const b1 = pair1[1]; 
+                            const b2 = pair2[1] + Math.floor(Math.random() * 2) * 10;
+                            return {
+                                q: `${a1} + ${a2} + ${b1} + ${b2}`,
+                                a: a1 + a2 + b1 + b2,
+                                hint: `Look for partners: ${a1} goes with ${b1}, ${a2} goes with ${b2}`
+                            };
+                        }
+                    },
+                    {
+                        id: 'b2',
+                        title: 'Subtraction Grouping',
+                        concept: 'If you are subtracting multiple numbers, check if the subtracted numbers add up to a nice round number.',
+                        example: { problem: '50 - 13 - 7 - 23', steps: ['50 - (13 + 7) - 23', '50 - 20 - 23', '30 - 23', '7'] },
+                        generator: () => {
+                            const start = Math.floor(Math.random() * 50) + 100;
+                            const sub1 = Math.floor(Math.random() * 20) + 10;
+                            const sub2 = 10 - (sub1 % 10);
+                            const sub3 = Math.floor(Math.random() * 10) + 5;
+                            return {
+                                q: `${start} - ${sub1} - ${sub3} - ${sub2}`,
+                                a: start - sub1 - sub2 - sub3,
+                                hint: `Try grouping -${sub1} and -${sub2} first.`
+                            };
+                        }
+                    },
+                    {
+                        id: 'b3',
+                        title: 'Rounding Near-Numbers',
+                        concept: 'Treat numbers like 98, 199, or 297 as their nearest round number, then fix the difference later.',
+                        example: { problem: '397 + 128', steps: ['(400 - 3) + 128', '400 + 128 - 3', '528 - 3', '525'] },
+                        generator: () => {
+                            const base = (Math.floor(Math.random() * 5) + 1) * 100;
+                            const diff = Math.floor(Math.random() * 3) + 1;
+                            const near = base - diff;
+                            const other = Math.floor(Math.random() * 80) + 20;
+                            return {
+                                q: `${near} + ${other}`,
+                                a: near + other,
+                                hint: `Treat ${near} as ${base} - ${diff}`
+                            };
+                        }
+                    }
+                ]
+            },
+            {
+                id: 'intermediate',
+                title: 'Intermediate: Multiplication Hacks',
+                color: 'bg-blue-500',
+                textClass: 'text-blue-600',
+                borderClass: 'border-blue-600',
+                hoverClass: 'group-hover:text-blue-700',
+                description: 'Use the "Magic Friends" (2 & 5, 4 & 25, 8 & 125) to break down complex multiplication.',
+                lessons: [
+                    {
+                        id: 'm1',
+                        title: 'Split & Combine Factors',
+                        concept: 'Break numbers into factors to find "Magic Friends". 25 loves 4 (makes 100). 125 loves 8 (makes 1000).',
+                        example: { problem: '32 × 125', steps: ['(4 × 8) × 125', '4 × (8 × 125)', '4 × 1000', '4000'] },
+                        generator: () => {
+                            const magicPairs = [{k: 125, v: 8}, {k: 25, v: 4}, {k: 5, v: 2}];
+                            const chosen = magicPairs[Math.floor(Math.random() * 2)];
+                            const multiplier = Math.floor(Math.random() * 8) + 2; 
+                            const largeFactor = chosen.v * multiplier;
+                            return {
+                                q: `${largeFactor} × ${chosen.k}`,
+                                a: largeFactor * chosen.k,
+                                hint: `Split ${largeFactor} into ${multiplier} × ${chosen.v}. Pair ${chosen.v} with ${chosen.k}.`
+                            };
+                        }
+                    },
+                    {
+                        id: 'm2',
+                        title: 'Distributive Law (The Hook)',
+                        concept: 'If two multiplication parts share a number, pull it out! a×b + a×c = a×(b+c).',
+                        example: { problem: '3.6 × 23 + 3.6 × 77', steps: ['3.6 × (23 + 77)', '3.6 × 100', '360'] },
+                        generator: () => {
+                            const common = (Math.floor(Math.random() * 90) + 10) / 10;
+                            const part1 = Math.floor(Math.random() * 40) + 10;
+                            const part2 = 100 - part1;
+                            return {
+                                q: `${common} × ${part1} + ${common} × ${part2}`,
+                                a: common * 100,
+                                hint: `Factor out ${common}. What is ${part1} + ${part2}?`
+                            };
+                        }
+                    }
+                ]
+            },
+            {
+                id: 'advanced',
+                title: 'Advanced: Speed Patterns',
+                color: 'bg-purple-500',
+                textClass: 'text-purple-600',
+                borderClass: 'border-purple-600',
+                hoverClass: 'group-hover:text-purple-700',
+                description: 'Specific patterns that allow for instant answers if you recognize them.',
+                lessons: [
+                    {
+                        id: 'a1',
+                        title: 'Same Tens, Complementary Units',
+                        concept: 'If tens digit is same (e.g., 30s) and units add to 10 (2+8). Rule: (Tens × (Tens+1)) | (Units × Units).',
+                        example: { problem: '38 × 32', steps: ['Tens: 3 × (3+1) = 12', 'Units: 8 × 2 = 16', 'Result: 1216'] },
+                        generator: () => {
+                            const ten = Math.floor(Math.random() * 8) + 1;
+                            const u1 = Math.floor(Math.random() * 8) + 1;
+                            const u2 = 10 - u1;
+                            const n1 = ten * 10 + u1;
+                            const n2 = ten * 10 + u2;
+                            return {
+                                q: `${n1} × ${n2}`,
+                                a: n1 * n2,
+                                hint: `Multiply ${ten} × ${ten+1} for the front. Multiply ${u1} × ${u2} for the back.`
+                            };
+                        }
+                    },
+                    {
+                        id: 'a2',
+                        title: 'Sum of Sequences',
+                        concept: 'Sum = (First + Last) × Count / 2. Useful for long lists of evenly spaced numbers.',
+                        example: { problem: '1 + 2 + ... + 10', steps: ['First: 1, Last: 10', 'Count: 10', '(1+10) × 10 / 2', '11 × 5 = 55'] },
+                        generator: () => {
+                            const start = Math.floor(Math.random() * 5) + 1;
+                            const step = Math.floor(Math.random() * 3) + 1;
+                            const count = (Math.floor(Math.random() * 4) + 2) * 2; 
+                            let arr = [];
+                            for(let i=0; i<count; i++) arr.push(start + (i*step));
+                            const last = arr[arr.length-1];
+                            return {
+                                q: `${arr.join(' + ')}`,
+                                a: arr.reduce((x,y)=>x+y, 0),
+                                hint: `Formula: (${start} + ${last}) × ${count} / 2`
+                            };
+                        }
+                    }
+                ]
+            }
+        ];
+
+        // --- STATE MANAGEMENT ---
+        const state = {
+            view: 'home', // 'home', 'level', 'lesson'
+            activeLevel: null,
+            activeLesson: null,
+            lessonMode: 'learn', // 'learn', 'practice', 'test'
+            
+            // Practice State
+            practiceProblem: null,
+            practiceFeedback: null, // null, 'correct', 'incorrect'
+            practiceStreak: 0,
+
+            // Test State
+            testPhase: 'intro', // 'intro', 'active', 'summary'
+            testQuestions: [],
+            testIndex: 0,
+            testScore: 0,
+            testStartTime: null,
+            testEndTime: null
+        };
+
+        // --- CORE FUNCTIONS ---
+
+        function init() {
+            render();
+        }
+
+        function setView(view, levelId = null, lessonId = null) {
+            state.view = view;
+            if (levelId) {
+                state.activeLevel = CURRICULUM.find(l => l.id === levelId);
+            }
+            if (lessonId && state.activeLevel) {
+                state.activeLesson = state.activeLevel.lessons.find(l => l.id === lessonId);
+                // Reset lesson state
+                state.lessonMode = 'learn';
+                resetPractice();
+                resetTest();
+            }
+            render();
+        }
+
+        function setLessonMode(mode) {
+            state.lessonMode = mode;
+            if (mode === 'practice') {
+                nextPracticeProblem();
+            } else if (mode === 'test') {
+                resetTest();
+            }
+            render();
+        }
+
+        // Practice Logic
+        function resetPractice() {
+            state.practiceProblem = null;
+            state.practiceFeedback = null;
+            state.practiceStreak = 0;
+        }
+
+        function nextPracticeProblem() {
+            if (!state.activeLesson) return;
+            state.practiceProblem = state.activeLesson.generator();
+            state.practiceFeedback = null;
+            render();
+        }
+
+        function checkPracticeAnswer() {
+            const input = document.getElementById('practice-input');
+            const val = parseFloat(input.value);
+            
+            if (val === state.practiceProblem.a) {
+                state.practiceFeedback = 'correct';
+                state.practiceStreak++;
+            } else {
+                state.practiceFeedback = 'incorrect';
+                state.practiceStreak = 0;
+            }
+            render();
+            // Re-focus logic handled in render or manually here if needed
+            if (state.practiceFeedback === 'incorrect') {
+               setTimeout(() => document.getElementById('practice-input')?.focus(), 50);
+            }
+        }
+
+        // Test Logic
+        function resetTest() {
+            state.testPhase = 'intro';
+            state.testQuestions = [];
+            state.testIndex = 0;
+            state.testScore = 0;
+            state.testStartTime = null;
+            state.testEndTime = null;
+        }
+
+        function startTest() {
+            if (!state.activeLesson) return;
+            state.testQuestions = Array.from({ length: 10 }, () => state.activeLesson.generator());
+            state.testIndex = 0;
+            state.testScore = 0;
+            state.testStartTime = Date.now();
+            state.testPhase = 'active';
+            render();
+        }
+
+        function checkTestAnswer() {
+            const input = document.getElementById('test-input');
+            const val = parseFloat(input.value);
+            const currentQ = state.testQuestions[state.testIndex];
+
+            if (val === currentQ.a) {
+                state.testScore++;
+            }
+
+            if (state.testIndex < 9) {
+                state.testIndex++;
+                render();
+            } else {
+                state.testEndTime = Date.now();
+                state.testPhase = 'summary';
+                render();
+            }
+        }
+
+        function getTestRating(score, seconds) {
+            if (score < 5) return { title: "Math Novice", color: "text-slate-600", msg: "Keep practicing the concepts!" };
+            if (score < 8) return { title: "Math Apprentice", color: "text-blue-600", msg: "Good accuracy, try to speed up!" };
+            if (seconds < 25) return { title: "Grandmaster", color: "text-purple-600", msg: "Unbelievable speed!" };
+            if (seconds < 40) return { title: "Speed Demon", color: "text-red-600", msg: "Blazing fast calculations." };
+            if (seconds < 60) return { title: "Math Pro", color: "text-emerald-600", msg: "Excellent professional speed." };
+            return { title: "Solid Performer", color: "text-emerald-600", msg: "Great accuracy. Work on speed next." };
+        }
+
+        // --- RENDERERS ---
+
+        function render() {
+            const app = document.getElementById('app');
+            app.innerHTML = ''; // Clear
+
+            if (state.view === 'home') {
+                renderHeader();
+                renderHome(app);
+            } else if (state.view === 'level') {
+                renderHeader(state.activeLevel, () => setView('home'));
+                renderLevelMenu(app);
+            } else if (state.view === 'lesson') {
+                renderHeader(state.activeLesson, () => setView('level', state.activeLevel.id));
+                renderLesson(app);
+            }
+
+            // Initialize Lucide icons
+            lucide.createIcons();
+        }
+
+        function renderHeader(activeSection = null, backHandler = null) {
+            const header = document.createElement('div');
+            header.className = "bg-slate-900 text-white p-4 shadow-lg sticky top-0 z-10";
+            
+            let leftContent = '';
+            if (activeSection) {
+                // Back button logic needs global handler exposure or inline click
+                window.handleBack = backHandler;
+                leftContent = `
+                    <button onclick="window.handleBack()" class="p-2 hover:bg-slate-800 rounded-full transition-colors mr-2">
+                        <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                    </button>
+                    <h1 class="text-xl font-bold tracking-tight">${activeSection.title}</h1>
+                `;
+            } else {
+                leftContent = `
+                    <i data-lucide="brain" class="text-emerald-400 w-6 h-6 mr-2"></i>
+                    <h1 class="text-xl font-bold tracking-tight">Mental Math Master</h1>
+                `;
+            }
+
+            header.innerHTML = `
+                <div class="max-w-4xl mx-auto flex items-center justify-between">
+                    <div class="flex items-center">
+                        ${leftContent}
+                    </div>
+                    <div class="text-sm font-medium text-slate-400 hidden sm:block">
+                        Math Speed Skills
+                    </div>
+                </div>
+            `;
+            document.getElementById('app').appendChild(header);
+        }
+
+        function renderHome(container) {
+            const main = document.createElement('main');
+            main.className = "max-w-4xl mx-auto p-4 space-y-8 w-full";
+
+            // Hero
+            const hero = document.createElement('div');
+            hero.className = "text-center py-10 px-4";
+            hero.innerHTML = `
+                <h2 class="text-3xl md:text-4xl font-extrabold text-slate-900 mb-4 tracking-tight">
+                    Speed Math <span class="text-emerald-600">Training Gym</span>
+                </h2>
+                <p class="text-lg text-slate-600 max-w-2xl mx-auto">
+                    Stop counting on your fingers. Master the 21 essential techniques used by math Olympians to solve problems instantly.
+                </p>
+            `;
+            main.appendChild(hero);
+
+            // Level Grid
+            const grid = document.createElement('div');
+            grid.className = "grid md:grid-cols-3 gap-6";
+            
+            CURRICULUM.forEach(level => {
+                const btn = document.createElement('button');
+                btn.className = "w-full text-left bg-white border border-slate-200 rounded-xl p-6 shadow-sm hover:shadow-md hover:border-emerald-400 transition-all group";
+                btn.onclick = () => setView('level', level.id);
+                
+                const dots = level.lessons.map(() => `<div class="h-1.5 w-6 rounded-full bg-slate-200 group-hover:bg-slate-300"></div>`).join('');
+
+                btn.innerHTML = `
+                    <div class="flex items-start justify-between">
+                        <div class="p-3 rounded-lg ${level.color} text-white mb-4 shadow-sm">
+                            <i data-lucide="calculator" class="w-6 h-6"></i>
+                        </div>
+                        <i data-lucide="chevron-right" class="text-slate-300 group-hover:text-emerald-500 transition-colors"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-800 mb-2">${level.title}</h3>
+                    <p class="text-slate-600 text-sm leading-relaxed">${level.description}</p>
+                    <div class="mt-4 flex gap-2">
+                        ${dots}
+                    </div>
+                `;
+                grid.appendChild(btn);
+            });
+            main.appendChild(grid);
+
+            // Features
+            const features = document.createElement('div');
+            features.className = "bg-slate-900 rounded-2xl p-8 text-white shadow-xl mt-12";
+            features.innerHTML = `
+                <h3 class="text-xl font-bold mb-6 border-b border-slate-700 pb-4">Why learn these tricks?</h3>
+                <div class="grid md:grid-cols-3 gap-8">
+                    <div>
+                        <div class="bg-slate-800 w-10 h-10 rounded-lg flex items-center justify-center mb-3">
+                            <i data-lucide="brain" class="text-emerald-400 w-5 h-5"></i>
+                        </div>
+                        <h4 class="font-bold mb-2">Pattern Recognition</h4>
+                        <p class="text-slate-400 text-sm">Math isn't just calculation; it's spotting patterns. These tricks train your brain to see the structure of numbers.</p>
+                    </div>
+                    <div>
+                        <div class="bg-slate-800 w-10 h-10 rounded-lg flex items-center justify-center mb-3">
+                            <i data-lucide="star" class="text-amber-400 w-5 h-5"></i>
+                        </div>
+                        <h4 class="font-bold mb-2">Confidence Boost</h4>
+                        <p class="text-slate-400 text-sm">Solving "hard" problems in seconds builds immense confidence in academic environments.</p>
+                    </div>
+                    <div>
+                        <div class="bg-slate-800 w-10 h-10 rounded-lg flex items-center justify-center mb-3">
+                            <i data-lucide="calculator" class="text-blue-400 w-5 h-5"></i>
+                        </div>
+                        <h4 class="font-bold mb-2">Everyday Utility</h4>
+                        <p class="text-slate-400 text-sm">Calculate tips, discounts, and bills instantly without reaching for your phone.</p>
+                    </div>
+                </div>
+            `;
+            main.appendChild(features);
+
+            container.appendChild(main);
+        }
+
+        function renderLevelMenu(container) {
+            const main = document.createElement('main');
+            main.className = "max-w-2xl mx-auto p-4 space-y-4 w-full";
+            
+            const intro = document.createElement('div');
+            intro.className = "bg-white p-6 rounded-xl border border-slate-200 shadow-sm mb-6";
+            intro.innerHTML = `
+                <h2 class="text-xl font-bold text-slate-800 mb-2">Choose a Technique</h2>
+                <p class="text-slate-600">Select a skill to master. Each lesson includes a breakdown and an interactive gym.</p>
+            `;
+            main.appendChild(intro);
+
+            const list = document.createElement('div');
+            list.className = "grid gap-3";
+            state.activeLevel.lessons.forEach(lesson => {
+                const btn = document.createElement('button');
+                btn.className = "flex items-center justify-between p-5 bg-white rounded-xl border border-slate-200 hover:border-emerald-400 hover:shadow-md transition-all group text-left w-full";
+                btn.onclick = () => setView('lesson', state.activeLevel.id, lesson.id);
+                btn.innerHTML = `
+                    <div>
+                        <h3 class="font-bold text-slate-800 group-hover:text-emerald-700 transition-colors">${lesson.title}</h3>
+                        <div class="text-xs text-slate-500 mt-1 uppercase tracking-wide font-semibold">Technique</div>
+                    </div>
+                    <div class="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-emerald-50 transition-colors">
+                        <i data-lucide="chevron-right" class="text-slate-300 group-hover:text-emerald-500 w-5 h-5"></i>
+                    </div>
+                `;
+                list.appendChild(btn);
+            });
+            main.appendChild(list);
+            container.appendChild(main);
+        }
+
+        function renderLesson(container) {
+            const main = document.createElement('main');
+            main.className = "max-w-2xl mx-auto p-4 w-full animate-fade-in";
+
+            // Tabs
+            const tabs = document.createElement('div');
+            tabs.className = "flex gap-4 mb-6 border-b border-slate-200";
+            
+            const renderTab = (modeId, label) => {
+                const isActive = state.lessonMode === modeId;
+                const btn = document.createElement('button');
+                btn.className = `pb-3 px-2 font-medium text-sm transition-colors ${isActive ? 'text-emerald-600 border-b-2 border-emerald-600' : 'text-slate-500 hover:text-slate-800'}`;
+                btn.innerText = label;
+                btn.onclick = () => setLessonMode(modeId);
+                return btn;
+            };
+
+            tabs.appendChild(renderTab('learn', 'Concept Guide'));
+            tabs.appendChild(renderTab('practice', 'Practice Gym'));
+            tabs.appendChild(renderTab('test', 'Speed Test'));
+            main.appendChild(tabs);
+
+            // Content Area
+            const content = document.createElement('div');
+            
+            if (state.lessonMode === 'learn') {
+                const stepsHtml = state.activeLesson.example.steps.map((step, idx) => `
+                    <div class="flex items-center gap-3 animate-slide-up" style="animation-delay: ${idx * 150}ms">
+                        <div class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs font-bold shrink-0">${idx + 1}</div>
+                        <div class="text-lg text-slate-600 font-mono">${step}</div>
+                    </div>
+                `).join('');
+
+                content.innerHTML = `
+                    <div class="space-y-6">
+                        <div class="bg-blue-50 border-l-4 border-blue-500 p-6 rounded-r-lg">
+                            <h3 class="text-blue-900 font-bold mb-2 flex items-center gap-2">
+                                <i data-lucide="book-open" class="w-5 h-5"></i> The Technique
+                            </h3>
+                            <p class="text-blue-800 leading-relaxed text-lg">${state.activeLesson.concept}</p>
+                        </div>
+
+                        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                            <div class="bg-slate-50 p-4 border-b border-slate-200 font-semibold text-slate-700">
+                                Walkthrough Example
+                            </div>
+                            <div class="p-6 space-y-4">
+                                <div class="text-2xl font-mono text-center font-bold text-slate-800 bg-slate-100 p-4 rounded-lg">
+                                    ${state.activeLesson.example.problem}
+                                </div>
+                                <div class="space-y-2">
+                                    ${stepsHtml}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button onclick="setLessonMode('practice')" class="w-full py-4 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200 flex items-center justify-center gap-2">
+                            Try it yourself <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                `;
+            } else if (state.lessonMode === 'practice') {
+                if (!state.practiceProblem) nextPracticeProblem();
+
+                const topBar = `
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="flex items-center gap-2 text-sm font-medium text-slate-500">
+                             <i data-lucide="award" class="${state.practiceStreak > 0 ? 'text-amber-400' : 'text-slate-300'} w-5 h-5"></i>
+                             Streak: ${state.practiceStreak}
+                        </div>
+                        <button onclick="nextPracticeProblem()" class="text-sm text-emerald-600 font-medium flex items-center gap-1 hover:underline">
+                          Skip <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                `;
+
+                let mainBox = '';
+
+                if (state.practiceFeedback === 'correct') {
+                    mainBox = `
+                        <div class="animate-bounce-in">
+                            <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i data-lucide="check-circle" class="w-8 h-8"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-green-700 mb-2">Excellent!</h3>
+                            <p class="text-slate-600 mb-6">That's the right answer.</p>
+                            <button onclick="nextPracticeProblem()" class="px-8 py-3 bg-slate-900 text-white rounded-lg font-bold hover:bg-slate-800 transition-colors">
+                                Next Problem
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    const isIncorrect = state.practiceFeedback === 'incorrect';
+                    mainBox = `
+                        <form onsubmit="event.preventDefault(); checkPracticeAnswer()" class="max-w-xs mx-auto">
+                            <input 
+                                id="practice-input"
+                                type="number" 
+                                step="any"
+                                autocomplete="off"
+                                placeholder="?" 
+                                class="w-full text-center text-3xl font-bold py-4 rounded-xl border-2 outline-none transition-all mb-4 ${isIncorrect ? 'border-red-300 bg-red-50 text-red-900 placeholder-red-300' : 'border-slate-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-50 text-slate-800'}"
+                            />
+                            
+                            ${isIncorrect ? `
+                                <div class="text-red-500 font-medium mb-4 flex items-center justify-center gap-2">
+                                    <i data-lucide="x-circle" class="w-4 h-4"></i> Try again!
+                                </div>
+                            ` : ''}
+                            
+                            <div class="grid grid-cols-1 gap-3">
+                                <button type="submit" class="w-full py-3 bg-emerald-600 text-white rounded-lg font-bold hover:bg-emerald-700 transition-all shadow-md active:scale-95">
+                                    Check Answer
+                                </button>
+                                ${isIncorrect ? `
+                                    <div class="text-sm text-slate-500 mt-2 bg-slate-50 p-3 rounded-lg">
+                                        <span class="font-bold text-slate-700">Hint:</span> ${state.practiceProblem.hint}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </form>
+                    `;
+                }
+
+                content.innerHTML = `
+                    <div class="space-y-6">
+                        ${topBar}
+                        <div class="bg-white rounded-2xl shadow-xl p-8 text-center border border-slate-100">
+                            <div class="text-4xl md:text-5xl font-mono font-bold text-slate-800 mb-8">
+                                ${state.practiceProblem.q}
+                            </div>
+                            ${mainBox}
+                        </div>
+                    </div>
+                `;
+            } else if (state.lessonMode === 'test') {
+                if (state.testPhase === 'intro') {
+                    content.innerHTML = `
+                        <div class="bg-white rounded-2xl shadow-lg p-8 text-center border border-slate-100">
+                            <div class="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <i data-lucide="timer" class="w-10 h-10"></i>
+                            </div>
+                            <h3 class="text-2xl font-bold text-slate-800 mb-2">Speed Challenge</h3>
+                            <p class="text-slate-600 mb-8 max-w-md mx-auto">
+                                Solve 10 problems as fast as you can. We'll measure your accuracy and speed to assign you a Mental Math Rank.
+                            </p>
+                            <button onclick="startTest()" class="w-full max-w-xs mx-auto py-4 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200 flex items-center justify-center gap-2">
+                                Start Test <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                    `;
+                } else if (state.testPhase === 'active') {
+                    content.innerHTML = `
+                         <div>
+                            <div class="flex justify-between text-sm font-medium text-slate-500 mb-4">
+                                <span>Question ${state.testIndex + 1} / 10</span>
+                                <span>Wait for results...</span>
+                            </div>
+                            <div class="bg-white rounded-2xl shadow-xl p-8 text-center border border-slate-100">
+                                <div class="text-4xl md:text-5xl font-mono font-bold text-slate-800 mb-8">
+                                    ${state.testQuestions[state.testIndex].q}
+                                </div>
+                                <form onsubmit="event.preventDefault(); checkTestAnswer()" class="max-w-xs mx-auto">
+                                    <input 
+                                        id="test-input"
+                                        type="number" 
+                                        step="any"
+                                        autofocus
+                                        autocomplete="off"
+                                        placeholder="?" 
+                                        class="w-full text-center text-3xl font-bold py-4 rounded-xl border-2 outline-none transition-all mb-4 border-slate-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-50 text-slate-800"
+                                    />
+                                    <button type="submit" class="w-full py-3 bg-purple-600 text-white rounded-lg font-bold hover:bg-purple-700 transition-all shadow-md active:scale-95">
+                                        Submit
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    `;
+                } else if (state.testPhase === 'summary') {
+                    const timeSeconds = (state.testEndTime - state.testStartTime) / 1000;
+                    const rating = getTestRating(state.testScore, timeSeconds);
+
+                    content.innerHTML = `
+                        <div class="bg-white rounded-2xl shadow-xl p-8 text-center border border-slate-100 animate-fade-in">
+                            <div class="w-20 h-20 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <i data-lucide="trophy" class="w-10 h-10"></i>
+                            </div>
+                            
+                            <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wide mb-1">Test Complete</h3>
+                            <h2 class="text-3xl font-extrabold ${rating.color} mb-2">${rating.title}</h2>
+                            <p class="text-slate-600 mb-8">${rating.msg}</p>
+
+                            <div class="grid grid-cols-2 gap-4 mb-8">
+                                <div class="bg-slate-50 p-4 rounded-lg">
+                                    <div class="text-slate-500 text-xs font-bold uppercase mb-1">Score</div>
+                                    <div class="text-2xl font-mono font-bold text-slate-800">${state.testScore}/10</div>
+                                </div>
+                                <div class="bg-slate-50 p-4 rounded-lg">
+                                    <div class="text-slate-500 text-xs font-bold uppercase mb-1">Time</div>
+                                    <div class="text-2xl font-mono font-bold text-slate-800">${timeSeconds.toFixed(1)}s</div>
+                                </div>
+                            </div>
+
+                            <button onclick="resetTest(); render()" class="text-slate-500 font-medium hover:text-purple-600 flex items-center justify-center gap-2 mx-auto">
+                                <i data-lucide="refresh-cw" class="w-4 h-4"></i> Try Again
+                            </button>
+                        </div>
+                    `;
+                }
+            }
+            
+            main.appendChild(content);
+            container.appendChild(main);
+
+            // Auto-focus input helper for practice and test
+            const input = document.querySelector('input');
+            if (input) setTimeout(() => input.focus(), 50);
+        }
+
+        // Initialize App
+        init();
+
+        // Global exposes for onclick handlers
+        window.setView = setView;
+        window.setLessonMode = setLessonMode;
+        window.nextPracticeProblem = nextPracticeProblem;
+        window.checkPracticeAnswer = checkPracticeAnswer;
+        window.startTest = startTest;
+        window.checkTestAnswer = checkTestAnswer;
+        window.resetTest = resetTest;
+        window.resetPractice = resetPractice;
+
+    </script>
+</body>
+</html>
