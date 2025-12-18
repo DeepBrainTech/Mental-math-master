@@ -204,6 +204,7 @@
             // Test State
             testPhase: 'intro', // 'intro', 'active', 'summary'
             testQuestions: [],
+            testAnswers: [], // Stores user answers
             testIndex: 0,
             testScore: 0,
             testStartTime: null,
@@ -277,6 +278,7 @@
         function resetTest() {
             state.testPhase = 'intro';
             state.testQuestions = [];
+            state.testAnswers = [];
             state.testIndex = 0;
             state.testScore = 0;
             state.testStartTime = null;
@@ -286,6 +288,7 @@
         function startTest() {
             if (!state.activeLesson) return;
             state.testQuestions = Array.from({ length: 10 }, () => state.activeLesson.generator());
+            state.testAnswers = [];
             state.testIndex = 0;
             state.testScore = 0;
             state.testStartTime = Date.now();
@@ -295,9 +298,12 @@
 
         function checkTestAnswer() {
             const input = document.getElementById('test-input');
-            const val = parseFloat(input.value);
-            const currentQ = state.testQuestions[state.testIndex];
+            const val = input.value === '' ? null : parseFloat(input.value);
+            
+            // Store answer
+            state.testAnswers.push(val);
 
+            const currentQ = state.testQuestions[state.testIndex];
             if (val === currentQ.a) {
                 state.testScore++;
             }
@@ -671,6 +677,34 @@
                     const timeSeconds = (state.testEndTime - state.testStartTime) / 1000;
                     const rating = getTestRating(state.testScore, timeSeconds);
 
+                    // Generate review list
+                    const reviewHtml = state.testQuestions.map((q, i) => {
+                        const userAns = state.testAnswers[i];
+                        const isCorrect = userAns === q.a;
+                        const styleClass = isCorrect 
+                            ? "bg-green-50 border-green-200 text-green-900" 
+                            : "bg-red-50 border-red-200 text-red-900";
+                        const icon = isCorrect 
+                            ? '<i data-lucide="check" class="w-4 h-4 text-green-600"></i>' 
+                            : '<i data-lucide="x" class="w-4 h-4 text-red-600"></i>';
+                        
+                        return `
+                            <div class="flex items-center justify-between p-3 rounded-lg border ${styleClass} mb-2 text-sm">
+                                <div class="flex items-center gap-3">
+                                    <span class="font-mono font-bold text-slate-500 w-6 text-right">${i+1}.</span>
+                                    <span class="font-medium">${q.q}</span>
+                                </div>
+                                <div class="flex items-center gap-4 text-right">
+                                    <div class="flex flex-col items-end leading-tight">
+                                        <span class="font-bold">${userAns !== null ? userAns : '-'}</span>
+                                        ${!isCorrect ? `<span class="text-xs text-slate-500 line-through decoration-red-400">Ans: ${q.a}</span>` : ''}
+                                    </div>
+                                    ${icon}
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+
                     content.innerHTML = `
                         <div class="bg-white rounded-2xl shadow-xl p-8 text-center border border-slate-100 animate-fade-in">
                             <div class="w-20 h-20 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -692,9 +726,18 @@
                                 </div>
                             </div>
 
-                            <button onclick="resetTest(); render()" class="text-slate-500 font-medium hover:text-purple-600 flex items-center justify-center gap-2 mx-auto">
-                                <i data-lucide="refresh-cw" class="w-4 h-4"></i> Try Again
-                            </button>
+                            <div class="mt-8 text-left w-full max-w-md mx-auto">
+                                <h4 class="font-bold text-slate-700 mb-4 text-sm uppercase tracking-wide">Review Answers</h4>
+                                <div class="space-y-2">
+                                    ${reviewHtml}
+                                </div>
+                            </div>
+                            
+                            <div class="mt-8">
+                                <button onclick="resetTest(); render()" class="text-slate-500 font-medium hover:text-purple-600 flex items-center justify-center gap-2 mx-auto">
+                                    <i data-lucide="refresh-cw" class="w-4 h-4"></i> Try Again
+                                </button>
+                            </div>
                         </div>
                     `;
                 }
