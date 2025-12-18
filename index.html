@@ -321,9 +321,14 @@
         function getTestRating(score, seconds) {
             if (score < 5) return { title: "Math Novice", color: "text-slate-600", msg: "Keep practicing the concepts!" };
             if (score < 8) return { title: "Math Apprentice", color: "text-blue-600", msg: "Good accuracy, try to speed up!" };
-            if (seconds < 25) return { title: "Grandmaster", color: "text-purple-600", msg: "Unbelievable speed!" };
-            if (seconds < 40) return { title: "Speed Demon", color: "text-red-600", msg: "Blazing fast calculations." };
-            if (seconds < 60) return { title: "Math Pro", color: "text-emerald-600", msg: "Excellent professional speed." };
+            
+            // Perfect score tiers
+            if (score === 10) {
+                if (seconds < 40) return { title: "Grandmaster", color: "text-purple-600", msg: "Unbelievable speed! Perfect score." };
+                if (seconds < 60) return { title: "Speed Demon", color: "text-red-600", msg: "Blazing fast calculations. Perfect score." };
+            }
+            
+            if (seconds < 80) return { title: "Math Pro", color: "text-emerald-600", msg: "Excellent professional speed." };
             return { title: "Solid Performer", color: "text-emerald-600", msg: "Great accuracy. Work on speed next." };
         }
 
